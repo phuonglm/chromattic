@@ -26,6 +26,8 @@ import org.chromattic.core.mapper.ObjectMapper;
 import org.chromattic.core.Domain;
 import org.chromattic.metamodel.mapping.NodeTypeKind;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,10 +47,8 @@ public class QueryBuilderImpl<O> implements QueryBuilder<O> {
   private String where;
 
   /** . */
-  private String orderByProperty;
+  private Map<String, Ordering> orderByMap;
 
-  /** . */
-  private Ordering orderBy;
 
   /** . */
   private ObjectMapper mapper;
@@ -81,8 +81,7 @@ public class QueryBuilderImpl<O> implements QueryBuilder<O> {
     this.fromClass = fromClass;
     this.mapper = mapper;
     this.where = null;
-    this.orderByProperty = null;
-    this.orderBy = null;
+    this.orderByMap = null;
     this.session = session;
     this.rootNodePath = rootNodePath;
   }
@@ -106,8 +105,10 @@ public class QueryBuilderImpl<O> implements QueryBuilder<O> {
     if (orderBy == null) {
       throw new NullPointerException();
     }
-    this.orderByProperty = orderByProperty;
-    this.orderBy = orderBy;
+    if(orderByMap == null){
+      orderByMap = new LinkedHashMap<String, Ordering>();
+    }
+    this.orderByMap.put(orderByProperty,orderBy);
     return this;
   }
 
@@ -140,8 +141,12 @@ public class QueryBuilderImpl<O> implements QueryBuilder<O> {
       sb.append(" WHERE jcr:path LIKE '").append(rootNodePath).append("/%'");
     }
 
-    if (orderBy != null) {
-      sb.append(" ORDER BY ").append(orderByProperty).append(" ").append(orderBy);
+    if (orderByMap != null) {
+      sb.append(" ORDER BY ");
+      for( String orderBy: orderByMap.keySet()){
+       sb.append(orderBy).append(" ").append(orderByMap.get(orderBy)).append(",");
+      }
+      sb.deleteCharAt(sb.length() - 1);
     }
 
     //
